@@ -1,3 +1,6 @@
+# This file contians code to upload all the necessary R packages/libraries
+# Useful for courses where internet access may be an issue.
+#
 install.packages('tidyverse', quietly = TRUE,
                  repos =  'https://www.stats.bris.ac.uk/R/')
 install.packages('readxl', quietly = TRUE,
