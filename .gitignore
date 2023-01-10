@@ -1,0 +1,16 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+.git
+*/
+!data/
+data/BigCitiesHealth.csv
+!/images
+*.zip
+*.pdf
+!Intro.pdf
+!Instructions.pdf
+*.html
+*.docx
+!Reference_style.docx

@@ -1,0 +1,999 @@
+---
+title: "Introducing R - one day course"
+author: "Anthony Staines, Sara McQuinn, and Gillian Paul"
+date: "`r format(Sys.Date(),'%B %d %Y')`"
+output:
+  pdf_document:
+    toc: yes
+    number_sections: yes
+  word_document:
+    toc: yes
+    reference_docx: ~/R/Reference_Styles/Styles_Template.docx
+  html_document:
+    toc: yes
+    df_print: paged
+editor_options:
+  chunk_output_type: console
+---
+
+```{r setup, include=FALSE}
+options(conflicts.policy = list(warn = FALSE))
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE,
+                      warning = FALSE, message = FALSE)
+```
+
+# What are we doing today
+
+We are going to show you how to use RStudio for simple data analysis. These tools will take you a very long way in answering questions about data.
+
+## First steps
+Install RStudio Desktop from https://posit.co/downloads/
+Install R from https://www.stats.bris.ac.uk/R/
+
+Start and run both, to make sure they work. We'll be using RStudio exclusively, but you must have R installed too, for RStudio to work.
+
+In Rstudio click on the file we sent you, which is called _2023 MSc Nursing day.zip_. This is a compressed file containing one folder.
+
+Unzip it, to take out the folder, following these instructions :- https://support.microsoft.com/en-us/windows/zip-and-unzip-files-f6dde0a7-0fec-8294-e1d3-703ed85e7ebc
+
+Put the resulting folder _2023 MSc Nursing day_ anywhere suitable, but be sure you **know** where it is.
+
+Click on the file in that folder called _2023 MSc Nursing day.Rproj_ which will open the project workspace for the seminar.
+
+Click File -> Open File in the menu bar at the top, and select and open the file called _Intro.Rmd_ - this file.
+
+Please be **sure** all this is working before the day of the seminar.
+
+
+# What will we cover today
+
+
+1. Some basic words - package, and the _library()_ command
+2. Numbers, characters and dates
+3. Reading in data from Excel files (examples provided, or bring your own)
+4. Summary statistics for data
+5. Simple graphs and tables
+6. Summary statistics for graphs and tables
+
+
+# Basic ideas
+
+
+R is a system, built from three pieces.
+
+1. There's a core;
+2. There's a set of default packages, which are always available;
+3. There are packages **you** choose to add.
+
+Packages do things, for example we have a package of statistical tests, called _stats_, a package for graphs  called _graphics_, a package for dates called _lubridate_, and many more.
+
+Some packages, the default set, are already installed and are automatically loaded when you start RStudio. However, for many others, you have to install them yourself from the internet, and then load them yourself.
+
+To do this you need to type commands, and run them. You run a command by either typing it into the Console (below), and pressing the [Enter] key when you are done, or by running the code below this line.
+
+There are several ways to do that, for this example we recommend moving the cursor to the line you want to run, (beginning with `install.packages`) and pressing the [Control] (or [Ctrl]) and [Enter] keys together. Please do that now.  
+
+
+```{r}
+if (!require('tidyverse')) { # Do we have it already? If not, get it.
+  install.packages('tidyverse', quietly = TRUE,
+            repos =  'https://www.stats.bris.ac.uk/R/')
+  }
+# Note the ! in front of require/
+
+# require(tidyverse) would load the tidyverse package, if it was already installed.
+#
+# if (require(tidyverse)) {...} is TRUE if it's already installed, and would go on to do whatever was between the {} if it was installed.
+#
+# if (! require(tidyverse)) {...} is FALSE if it's already installed, and would go on to do whatever was between the {} if it was not installed. In this case, it installs the tidyverse package.
+```
+
+The text in grey is called a chunk, it's a discrete piece of R code that does something. In the original file it's the text between "```{r}" and "```".
+
+All going well, this command (or this chunk, if that's how you choose to run it) will install multiple packages on your computer, in an area called the library.
+
+The next two commands will load these packages, from the library. You can run these one at a time with [Ctrl][Enter] as before, or you can press the little green right pointing arrowhead at the top right of the code chunk to run the whole chunk.  
+
+
+```{r}
+library('tidyverse', quietly = TRUE)
+library('readxl', quietly = TRUE)
+```
+
+The first of these _library('tidyverse')_ loads a set of packages for drawing graphs, and storing data. The second _library('readxl')_ loads a package for reading data from Excel files.
+
+
+# Numbers, characters and dates
+
+
+A quick diversion. Think about what goes into an Excel file. Typically there may be one or more sheets, each with a name. Often there is a row of names across the top of the file, where each name tells you what is in the column underneath it. There is often a column, usually the first column, which has either identifiers of some kind, or text descriptions of some kind, giving information on the remainder of the row.
+(R can read from lots of sources, but we'll start simple).
+
+R, like pretty much every other statistics package on earth, works on two assumptions
+
+**Rows** are observations (for example one person, or one clinic visit, or one blood test result, or one nursing intervention, is one row);
+
+**Columns** are data - for a prescription perhaps
+
+1. Patient ID number,
+2. Drug name,
+3. Dose,
+4. Route of administration
+5. Frequency of administration
+6. Date of the prescription
+7. Code to say if this is a repeat prescription or a new prescription, and so on.
+
+If any of this isn't true, it can be fixed, but that takes a good bit more work, and we won't cover this today.
+
+Some columns are just numbers, some are just characters, either words or letters, some are dates, and some are codes. R can read all of these.
+
+What is important, is always to check. For example, Excel has some odd ideas about what a date is. If all your dates are out by a few years, that's because there are (at least) three versions of Excel dates out there. It also allows you to put letters in columns of numbers. If you read in data from Excel, and get a column of letters when you expected numbers, have a look and see if there's a capital O hiding in the 0's or a capital I hiding in the 1's.
+
+So, check - the _str()_ command (short for stucture) is your friend here.
+
+
+# Reading in data from Excel files (examples provided, or bring your own)
+
+
+People often have data in Excel spreadsheets. R makes it easy to read these. I've given you one to get you started, but feel free to use your own. This one is the number of practicing nurses per 1,000 population for the last 12 years, for a set of wealthy countries, from the OECD data site https://stats.oecd.org/.
+
+It's not a bad idea to start by listing the sheets in the Excel file provided with the _excel_sheets()_ command. Notice that the result of the command pops up in the Global Environment pane on the top right.
+
+```{r}
+Sheets <- excel_sheets('data/Practicing_Nurses_per_1000.xlsx')
+```
+
+The little _<-_ symbol is called an assignment operator - it sets the value of Sheets to whatever _excel_sheets()_ produces. Another way to say exactly the same thing is that the _<-_ operator gives a name to the output of _excel_sheets()_, so you can refer to it again.
+
+(If you've done programming before, you may be more familiar with the use of the _=_ sign for this, but there are good reasons for a separate operator for assignment.)
+
+Typing the word 'Sheets', prints the value in the console.
+
+```{r}
+Sheets
+```
+
+It would now be good to bring in the data. Open the spreadsheet _Practicing_Nurses_per_1000.xlsx_ in Excel, or LibreOffice, and see what it looks like.
+
+Now we want to read it in, and we can use the _read_excel()_ command to do this. We assign the output of the _read_excel()_ command to the name _OECD_Nurses_, but we could have called it almost anything, Akallabeth, syzygy or cf2ce19-c1f5-40c3-9198-26fe2a122cc4, as takes your fancy.
+
+
+```{r}
+OECD_Nurses <- read_excel('data/Practicing_Nurses_per_1000.xlsx',
+                          sheet = 'Nurses',
+                          na = "")
+```
+
+As there's only one sheet, you don't really need the _sheet = 'Nurses'_ bit, but you might have more than one sheet in your excel file.
+
+What about the _na = ""_ bit? R has a clear idea of a missing value, which is shown as NA. In these data the number of practicing nurses is not known for quite a few years in some countries, and so is blank - go look at the spreadsheet again. In fact blank is the default missing value option for _read_excel()_ Excel, so we don't need that either, but you might have a file with another value, so at least you know where to look.
+
+To see what we've got the easiest way is to click on the name _OECD_Nurses_ in the Global Environment pane. If you look down at the console, you will see that this puts the command _View(OECD_Nurses)_ into the console and runs it. If you prefer you can type the command.
+
+R keeps data internally in things called 'dataframes'. Each looks like a spreadsheet table, and you can see them using the _View()_ command, of just by clicking on them in the _Global Environment_ pane.
+
+You may also hear of _tibbles_, which are a slightly updated version of a _dataframe_, but otherwise much the same.
+
+
+# Summary statistics for data
+
+
+There are a few things you might want to know about your data. The _summary()_ command will give you quite a lot of useful information.
+
+```{r}
+summary(OECD_Nurses)
+
+```
+
+The output to the console includes (for every numeric variable) the smallest and largest values  Min and Max; the 1st, 2nd, and third quartiles, 1st Qu., Median, and 3rd Qu.; and the Mean. It doesn't include the standard deviation, nor the inter-quartile range, which can both be useful. Missing values are ignored in these calculations, but it does tell you the number of missing values - NA's.
+
+For a character variable, _Country_ in this case, all it gives is that it is a character variable.
+
+A more useful summary comes from a different package, _describe()_ from the _Hmisc_ package. This package is installed by default in R.
+
+```{r}
+library(Hmisc, quietly = TRUE)
+  describe(OECD_Nurses)
+
+```
+
+In either case, please look carefully to see if this is right. There is little point in engaging in an elaborate analysis of the wrong data.
+
+
+# Simple graphs and tables
+
+
+Suppose you want to know how the mean has changed over time, which is quite a reasonable question. One catch is this - you have to tell the _mean()_ function explicitly to ignore missing values, by using the _na.rm_ option.
+
+
+```{r}
+mean(OECD_Nurses$Year_2010) # Missing value
+mean(OECD_Nurses$Year_2010, na.rm = TRUE) # 7.38
+mean(OECD_Nurses$Year_2011, na.rm = TRUE) # 7.52
+mean(OECD_Nurses$Year_2012, na.rm = TRUE) # 7.54
+mean(OECD_Nurses$Year_2013, na.rm = TRUE) # 7.42
+mean(OECD_Nurses$Year_2014, na.rm = TRUE) # 7.78
+mean(OECD_Nurses$Year_2015, na.rm = TRUE) # 7.58
+mean(OECD_Nurses$Year_2016, na.rm = TRUE) # 7.8
+mean(OECD_Nurses$Year_2017, na.rm = TRUE) # 7.63
+mean(OECD_Nurses$Year_2018, na.rm = TRUE) # 7.95
+mean(OECD_Nurses$Year_2019, na.rm = TRUE) # 8.16
+mean(OECD_Nurses$Year_2020, na.rm = TRUE) # 8.46
+mean(OECD_Nurses$Year_2021, na.rm = TRUE) # 9.30
+
+```
+
+This does look as if they are going up, but notice that the number of countries with data is falling in the later years.
+
+
+However thinking further, you have a set of values for each year. There are only 12 years here, so you can do it by hand, but suppose you had 250 hospital wards, 1,200 primary care centres, or the like. The 'Year' is actually data, not the name of a variable. So we treat it as such.
+
+We use the command _pivot_longer()_ which "lengthens" data, increasing the number of rows and decreasing the number of columns. The reverse, if you need it, is _pivot_wider()_.
+
+
+```{r}
+Nurses <-
+  pivot_longer(OECD_Nurses,
+               cols = -Country, # Leave these
+               names_to = 'Year', # New column
+               names_prefix = 'Year_', # Lose this
+               values_to = 'Nurses_per_k') # New variable name
+```
+
+Check!
+
+```{r}
+View(Nurses) # have a look at it
+  str(Nurses)
+```
+
+Oops - Year is not a number, which may bite us later on, so we fix it with the _mutate()_ command. Guess what _as.numeric()_ does.
+
+```{r}
+Nurses <- Nurses %>%
+  mutate(Year = as.numeric(Year)) 
+  # the mutate command makes a new variable
+  #   (or renames an existing one)
+
+str(Nurses) # Year is now a number
+```
+
+I said earlier that we could reverse the _pivot_longer()_ command, and this is how it is done with _pivot_wider()_.
+
+
+```{r}
+Wider <- pivot_wider(Nurses,
+            names_from = 'Year', # New column names are the values of Year
+            names_prefix = 'Year_', # Put it back
+            values_from = 'Nurses_per_k')
+# As promised - back where we started!
+
+```
+
+
+## Tables
+
+
+We'll stick with the _Nurses_ dataframe for the moment, and try to answer our original questions.
+
+```{r}
+Country_SUMMARY <- Nurses %>% # The dataframe we're working on
+  group_by(Country) %>% # Divided up by country
+  summarise(Mean = mean(Nurses_per_k,
+                        na.rm = TRUE), # Average - measure of centre
+            SD = sd(Nurses_per_k,
+                        na.rm = TRUE), # Standard deviation - measure of variability
+            Min = min(Nurses_per_k,
+                        na.rm = TRUE), # Smallest
+            Median = median(Nurses_per_k,
+                        na.rm = TRUE), # Middle value
+            Max = max(Nurses_per_k,
+                        na.rm = TRUE), # Largest
+            NA_Count = sum(is.na(Nurses_per_k)) # Number of missing values
+            )
+```
+
+
+This looks long, and complicated, but it isn't. First, it's the exact same thing written six times, for six slightly different functions (or commands), and it covers every country.
+
+
+Second to change it to do the same thing by _Year_ involves changing exactly one word. In real life, this is a big win.
+
+
+```{r}
+Year_SUMMARY <- Nurses %>% # The dataframe we're working on
+  group_by(Year) %>%  # divided up by Year
+  summarise(Mean = mean(Nurses_per_k,
+                        na.rm = TRUE),
+            SD = sd(Nurses_per_k,
+                        na.rm = TRUE),
+            Min = min(Nurses_per_k,
+                        na.rm = TRUE),
+            Median = median(Nurses_per_k,
+                        na.rm = TRUE),
+            Max = max(Nurses_per_k,
+                        na.rm = TRUE),
+            NA_Count = sum(is.na(Nurses_per_k))
+            )
+```
+
+The framework here is very simple
+
+```
+Output <- Dataframe %>%
+    group_by(Variable to report on) %>%
+    summarise(Thing or things to report)
+```
+
+We've already seen the assignment operator _<-_ and now we see what is called the pipe operator _%>%_ which just passes things on from one command or function to the next.
+
+So we have two tables - Country_SUMMARY and Year_SUMMARY. These are not maybe the smartest names, but they will do for now. To print them, and make them look nice, we can use the command _kable()_ from the _knitr_ package. There are lots of other choices, but this will do for a start.
+
+
+```{r}
+library(knitr)
+  kable(Country_SUMMARY)
+```
+
+This isn't very pretty, but modest effort can make it much better.
+
+```{r}
+kable(Country_SUMMARY,
+      digits = 2,
+      caption = 'Summary of Practicing nurses per 1,000 population, by Country - Source OECD https://stats.oecd.org')
+```
+
+Now we have something useful, something you could put in a report, for example. Every number is rounded to a reasonable number of digits, and there is a useful caption.  
+
+```{r}
+kable(Year_SUMMARY,
+      digits = 2,
+      caption = 'Summary of Practicing nurses per 1,000 population, by Year - Source OECD https://stats.oecd.org')
+```
+
+Note how little we had to change to get a second good table.
+
+
+## Pictures
+
+
+You might also want to make a picture, or two. It can be easier to get your message across in a graphic than a table. The way graphs are done in R looks not unlike the technique we've been showing for doing calculations. You start with something very simple, and go on to make it more complex, and better looking. I'm going to show a series of graphs, but in reality you would start with one, and then edit it to make it better.
+
+```{r}
+library(ggplot2)
+ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k)) + # What we are graphing to what 
+       geom_point() # How we are graphing it (points)
+```
+
+This is not pretty, but not wholly useless either. It tells us quite a lot about what is going on.
+
+```{r}
+ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k,
+           colour = Country)) + # What we are graphing to what 
+       geom_point() # How we are graphing it (points) 
+```
+
+This is more useful - every country now has a colour, and we can see some patterns.
+
+```{r}
+ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k,
+           colour = Country)) + # What we are graphing to what 
+       geom_point() +
+       geom_line()   # How we are graphing it (points and lines) 
+  
+```
+
+We need to tell the software we want one line per country, and not, as we have, one line per observation.
+
+```{r}
+ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k,
+           colour = Country,
+           group = Country)) + # What we are graphing to what 
+       geom_point() + # How we are graphing it
+       geom_line() #  points and lines, one line per country  
+                
+```
+
+There are **way** too many countries for this to be a sensible approach. Two-thirds of our space is filled with a list of colours and countries (called a guide or a key). We can do better, but this isn't especially simple.
+
+So, first remove the guide, and add a title, and a better name for the y-axis.
+
+```{r}
+ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k,
+           colour = Country,
+           group = Country)) + # What we are graphing to what 
+       geom_point() + # How we are graphing it
+       geom_line() + #  points and lines, one line per country  
+       guides(color = "none") + # Completely removes the guide
+       ggtitle('Practicing nurses per 1,000 population',
+               subtitle = 'Source OECD https://stats.oecd.org') +
+  ylab('Nurses per 1,000')
+                
+```
+
+This is quite nice, but does not tell you which country is which.
+
+The basic idea for labelling the lines is to identify the end point of each line (the one with the highest value of year), and put a text with the country name there. In many situations you could replace the longer names with shorter abbreviations.
+
+There's no easy way to do this, but it's far from impossible. I attach one way of doing it for your interest. This shows how the plotting and data handling facilities of R can be combined to great effect. I don't expect you to follow it, but I'm happy to go through it with anyone interested after the session.
+
+```{r}
+library(scales, quietly = TRUE) # Allows us to select pretty breaks
+
+g <- # We're saving the graph and calling it g
+  ggplot(data = Nurses, # Data to graph
+       aes(x = Year,
+           y = Nurses_per_k,
+           colour = Country,
+           group = Country)) + # What we are graphing to what 
+       geom_point() + # How we are graphing it
+       geom_line()  + #  points and lines, one line per country
+       guides(color = "none") + # Completely removes the guide
+       ggtitle('Practicing nurses per 1,000 population',
+               subtitle = 'Source OECD https://stats.oecd.org') +
+       ylab('Nurses per 1,000') + # Y- axis label
+       scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+       coord_cartesian(xlim = c(2010,2022),
+                       ylim = c(0,20)) + # Make space for the text labels
+# Add the text labels
+         geom_text(  # Add text labels
+         data = Nurses %>% # Make a new data set from Nurses
+                   group_by(Country) %>% 
+                   filter(!is.na(Nurses_per_k)) %>% #Remove missing values
+                   filter(Country %in% # Select countries to label
+                             c('Australia', 'Ireland',
+                               'Sweden', 'United Kingdom',
+                               'Greece', 'Iceland', 'Finland',
+                               'Mexico', 'Switzerland')) %>%
+                   arrange(desc(Year)) %>% # Put in order of year
+                   slice(1), # Take off the highest year for which there is data
+            aes(x = Year, label=Country), # Draw the labels
+               hjust = 0.50, vjust = -0.5) # Adjust their position
+
+g # Now we display the graph
+
+# Now we save the graph. you can also save from RStudio, which can be easier.
+
+ggsave('images/Saved_Graph.png', g,
+       units = 'cm',
+       width = 5, height = 4,
+       dpi = 1200) 
+
+```
+
+This is a graph you could send off to a journal.
+
+
+## Does it change over time?
+
+ 
+ Looking at the picture, it's hard to say - but not much anyway.
+ We can use a tool called **linear regression** to see what is going on.
+ To do this we use the _lm()_ function.
+ 
+```{r}
+m1 <-  lm(Nurses_per_k ~ Year, data = Nurses)
+  summary(m1) 
+  confint(m1)
+```
+
+Looking at year alone, there isn't much sign of a change over year. The estimate is 0.1, with a confidence interval from -0.04 to 0.25, nurses per 100,000 population per year. A confidence interval is, roughly, the range within which we are pretty sure the real value lies. A sensible way to interpret this is that the change could be zero, but might be a small positive change.
+
+
+```{r}
+m2 <-  lm(Nurses_per_k ~ Year + Country, data = Nurses)
+  summary(m2)
+  confint(m2)
+
+```
+
+
+Looking at the graph, the effect of country is much greater than any effect of year. We can fit a country level effect, by adding _+ Country_ to the model. This gives a slightly different, and more precise estimate of the effect of year - 0.11, with a confidence interval from 0.09 to 0.13, nurses per 100,000 population. This suggests that there is a real, but modest, effect of time.
+
+You can also install the _lme4_ package and use the _lmer()_ function to fit what's called a multi-level model to this type of data where you have loads of groups. Again, we're not going to cover this further today, but note that the estimate of year is about the same.
+
+```{r}
+require(lme4)
+
+m3 <-  lmer(Nurses_per_k ~ Year + (1|Country), data = Nurses)
+  summary(m3)
+  confint(m3)
+```
+
+Overall, it would be unwise to interpret this too strongly. It would be best to report the effect of year, and to note that this effect is much smaller than the between-countries effect.
+
+You might be tempted to fit a model with an interaction term here.
+
+
+```{r}
+m4 <-  lm(Nurses_per_k ~ Year + Country + Year:Country, data = Nurses)
+#Identical to 
+#m4 <-  lm(Nurses_per_k ~ Year * Country, data = Nurses)
+  summary(m4)
+  confint(m4)
+```
+
+
+If you do, the results are evidently meaningless. This is obvious here, but might not be so obvious in a more complex model, or if you had started out by fitting a more complex model. This is because the regression is using all the variation in the data, because there are no other data. You have a dataset with two variables and an outcome. There isn't enough variation for it to make sense to look at an interaction.
+
+# Another example - BigCities health data
+
+
+**BigCities** - details are at https://bigcitieshealthdata.org/
+
+This is a complicated data set to explain. It covers 35 of the larger US cities. There is one row per city per year. Each row contains one value - in this file the years of potential life lost per 100,000 people per year, adjusted for differences in the age distribution between the cities. This is a good summary measure of health, and higher is worse, lower is better.
+
+It is broken down by year, city poverty, city size, US region (and State), race, sex and sometimes race and sex combined. Each of these is a variable taking a small number of values, what is sometimes called a categorical variable.
+
+For some there is a natural ordering - time for Year, less and more segregated, less and more poor; for others there is no such ordering - e.g. Sex 'Both', 'Female, 'Male', and the 5 categories of race 'All', 'Asian/PI', 'Black', 'Hispanic' and 'White'. Note that both of these have categories 'Both' and 'All' which combine other categories.  
+
+
+For our next piece of work, we're going to use a different example. These are data from the US Big Cities project, a repository of comparative data from different cities. We're using a subset of this focussed on premature deaths, specifically on Years of Potential Life Lost (YPLL) before age 75.
+
+
+```{r}
+BigCities <- read_csv('data/BigCitiesHealth_Deaths_Premature_Death.csv')
+
+  str(BigCities) # Check! Always check!
+```
+
+
+## Looking at a whole dataset
+
+
+There are several ways to look at a whole dataset, as we discussed before. _summary()_ is always available - loaded by default, but not necessarily very helpful.  
+
+```{r}
+  summary(BigCities) # Not very much use
+```
+
+_glimpse()_, which is part of the _dplyr_ package within the overall _tidyverse_ package is more useful, and gives you a  feel for the data.   
+
+```{r}
+  glimpse(BigCities) # One way to look at it
+```
+
+For this type of dataset the _describe()_ function in the _Hmisc_ package is probably the most useful, and the output will repay close study.  
+
+```{r}
+  describe(BigCities) # Most useful
+```
+
+## Our questions
+
+Our question is how does YPLL differ by racial group, by the city level variables, over time.   
+
+Lets begin with the overall distribution, and remove the overlap groups - Both (genders) and All (races). We also take the opportunity to drop variables we're not going to use, to make looking at the dataset using the _View()_ command easier.   
+
+```{r}
+BigC <- BigCities %>%
+  filter(strata_sex_label != 'Both') %>% #Remove undesired overlap groups
+  filter(strata_race_label != 'All') %>%
+  select(-c('metric_item_label':'metric_source_desc_label_url_fn'),
+         -c('geo_label_proxy_or_real':'value_ci_flag_yesno'),
+         -c('geo_fips_code', 'value_90_ci_low', 'value_90_ci_high'),
+         ) # Remove unloved variables
+```
+
+_=_ is used quite often as a comparison operator - it's `TRUE` if the two things either side of it are the same in some sense.
+_!=_ is also a comparison operator - it's `TRUE` if the two things either side of it are not equal. It's used in the two _filter()_ statements to exclude rows that we don't want.
+
+
+```{r}
+BigC %>% group_by(strata_sex_label) %>%
+  summarise(N=n())
+BigC %>% group_by(strata_race_label) %>%
+  summarise(N=n())
+BigC %>% group_by(strata_race_sex_label) %>%
+  summarise(N=n())
+  
+describe(BigC)
+
+```
+
+
+So much for the data, now for some results.   
+
+
+## Tables of means and standard deviations
+
+
+We start with a simple table of means. There are tools for doing long table of multiple variables, specifically for journals, but it would take us too far afield to use these today - try the _rtables_ or _arsenal_ packages. There are lots more.   
+
+```{r}
+
+BigC %>% summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_region) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_poverty) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_Population) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_PopDensity) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(strata_race_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(strata_sex_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+BigC %>%  group_by(strata_race_sex_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE))
+
+
+```
+
+To get an idea of variability we can do a few things, but I'm going to do standard deviations.   
+
+```{r}
+BigC %>% summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_region) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_poverty) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_Population) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(geo_strata_PopDensity) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(strata_race_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(strata_sex_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+BigC %>%  group_by(strata_race_sex_label) %>%
+  summarise(Mean = mean(value, na.rm=TRUE),
+                               SD = sd(value, na.rm=TRUE))
+
+```
+
+This is one extra line, and a fair bit of cutting and pasting, If you don't know how to cut and paste, please learn how to use [Ctrl][C] (copy) (or [Ctrl][X] (cut)) and [Ctrl][V] (paste) respectively.   
+
+
+## Pictures
+
+
+It would be nice to visualise some of this! Start by installing the _GGally_ library. Once that's done, the code in the next chunk will work.   
+
+```{r}
+library(GGally)
+  ggpairs(BigC %>% # Reduce the dataset to more useful variables 
+            select(value,
+                   date_label,
+                 geo_strata_poverty:strata_sex_label)
+          )
+```
+
+These _pair plots_ are useful tools for looking across a range of variables, while studying a dataset. Like the output of _describe()_ they repay careful study. They are seldom helpful if published.   
+
+
+Here are a series of graphs of YPLL against year. We plot the difference (DeltaValue) from the overall mean, in standard deviation units, and draw a red line at the 0 mark (equal to the overall mean) on each graph.
+
+
+```{r}
+BigC <- BigC %>%
+  mutate(DeltaValue =
+           (value -
+              mean(value, na.rm=TRUE))/
+           sd(value, na.rm=TRUE))
+
+fivenum(BigC$DeltaValue)
+
+```
+
+
+```{r}
+
+ggplot(BigC %>% mutate(DeltaValue),
+       aes(x=date_label, y=DeltaValue)) +
+  geom_point() +
+  scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+  geom_hline(yintercept = 0,
+             linetype = 'dashed',
+             colour = 'red', alpha=0.5) +
+  labs(
+    title = 'YPLL compared with overall mean by year for 35 US cities',
+    subtitle = 'All records',
+    x = 'Calendar year',
+    y = ' YPLL per 100,000 per year',
+    caption = 'Source - Big Cities Health Ccoalition - https://bigcitieshealthdata.org/'
+  ) +
+  theme_minimal() # Sets the overall style of the graph - there are lots and lots of these.
+
+```
+
+This graph looks odd because lots of points are overplotted and all are the same colour. This next version is more helpful.   
+
+```{r}
+ggplot(BigC %>% mutate(DeltaValue),
+       aes(x=date_label, y=DeltaValue,
+           colour=strata_race_label)) +
+  geom_point(position = 'jitter') +
+  scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+  geom_hline(yintercept = 0,
+             linetype = 'dashed',
+             colour = 'red', alpha = 0.5) +
+  labs(
+    title = 'YPLL compared with overall mean by year for 35 US cities',
+    subtitle = 'All records, grouped by race',
+    x = 'Calendar year',
+    y = ' YPLL per 100,000 per year',
+    caption = 'Source - Big Cities Health Ccoalition - https://bigcitieshealthdata.org/'
+  ) +
+  theme_minimal() # Sets the overall style of the graph - there are lots and lots of these.
+
+
+```
+
+We've jittered the points - _geom_point(position = 'jitter')_ or _geom_jitter()_ (which are identical). and we've coloured them, with _aes(colour = strata_race_label))_, by racial group.
+
+We can also do multiple graphs on the same sheet, using the _facet_wrap()_ and _facet_grid()_ functions, to make separate graphs for males and females.   
+
+```{r}
+ggplot(BigC %>% mutate(DeltaValue),
+       aes(x=date_label, y=DeltaValue,
+           colour=strata_race_label)) +
+  geom_point(position = 'jitter') +
+  scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+  geom_hline(yintercept = 0,
+             linetype = 'dashed',
+             colour = 'red', alpha = 0.5) +
+  labs( # Lets us set most of teh text in the graph
+    title = 'YPLL compared with overall mean by year for 35 US cities',
+    subtitle = 'All records, grouped by sex and race',
+    x = 'Calendar year',
+    y = ' YPLL per 100,000 per year',
+    caption = 'Source - Big Cities Health Coalition - https://bigcitieshealthdata.org/'
+  ) +
+  theme_minimal() + # Sets the overall style of the graph - there are lots and lots of themes.
+  facet_grid(strata_sex_label ~ ., scales='fixed')
+
+```
+
+This already tells us a lot. Look carefully at the graph and try to interpret it. The next two graphs might work well at a conference.
+
+```{r}
+ggplot(BigC %>% mutate(DeltaValue),
+       aes(x=date_label, y=DeltaValue,
+           colour=strata_race_label)) +
+  geom_point(position = 'jitter') +
+  scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+  geom_hline(yintercept = 0,
+             linetype = 'dashed',
+             colour = 'red', alpha = 0.5) +
+  labs( # Lets us set most of the text in the graph
+    title = 'YPLL compared with overall mean by year for 35 US cities',
+    subtitle = 'All records, grouped by sex and race',
+    x = 'Calendar year',
+    y = ' YPLL per 100,000 per year',
+    caption = 'Source - Big Cities Health Ccoalition - https://bigcitieshealthdata.org/'
+  ) +
+  theme_minimal() + # Sets the overall style of the graph - there are lots and lots of these themes to play with.
+  facet_grid(vars(strata_sex_label, strata_race_label),
+             scales='fixed') # Same scale every graph
+
+```
+
+There are over 3,000 points on this graph, which is pretty good.   
+
+With this type of graph, and a statistically sophisticated audience, it can also be helpful to give each strip it's own scale.   
+
+```{r}
+ggplot(BigC %>% mutate(DeltaValue),
+       aes(x=date_label, y=DeltaValue,
+           colour=strata_race_label)) +
+  geom_point(position = 'jitter') +
+  scale_x_continuous(breaks = breaks_extended(8)) + # Nice labels for years
+  geom_hline(yintercept = 0,
+             linetype = 'dashed',
+             colour = 'red', alpha = 0.5) +
+  labs( # Lets us set most of the text in the graph
+    title = 'YPLL compared with overall mean by year for 35 US cities',
+    subtitle = 'All records, grouped by sex and race',
+    x = 'Calendar year',
+    y = ' YPLL per 100,000 per year',
+    caption = 'Source - Big Cities Health Ccoalition - https://bigcitieshealthdata.org/'
+  ) +
+  theme_minimal() + # Sets the overall style of the graph - there are lots and lots of these themes to play with.
+  facet_grid(vars(strata_sex_label, strata_race_label),
+             scales='free')
+```
+
+Please do this carefully. It's risky.   
+
+
+## Statistics
+
+
+A fairly obvious question is whether the apparent difference in means we saw earlier are real. The tool to answer this is linear regression. t-tests (which you may have heard of) are thinly disguised linear regression.
+
+To do this we need to install the _broom_ package - please do so. when this is done, the next chunk will work.
+
+```{r}
+require(broom)
+
+BigC %>%
+    do(tidy( # Run the regressions
+      lm(DeltaValue ~ strata_race_label, .),
+      conf.int = TRUE))
+BigC %>%
+    do(glance( # One line summary of results
+      lm(DeltaValue ~ strata_race_label, .),
+      conf.int = TRUE))
+#or#
+ Regression1 <- lm(DeltaValue ~ strata_race_label, BigC)
+  summary(Regression1)
+   confint(Regression1)
+```
+
+I recommend the first version!
+
+What does this say?
+```
+BigC %>% # Start with our dataframe (Table)
+    do( # Self explanatory - run the code here across the data 
+     tidy( # Make the output easy to use
+      lm(value ~ strata_race_label, .), # Linear regression
+      conf.int = TRUE) # with Confidence Intervals please
+      )
+```
+
+So what is linear regression doing?
+Look at this graph (called a boxplot).
+
+```{r}
+ggplot(BigC,
+       aes(x = strata_race_label, y = DeltaValue)) +
+         geom_boxplot() +
+  labs(
+    title = 'Boxplot of differences from overall mean of YPLL, by racial group',
+    x = "Racial group",
+    y = "YPLL per 10^5, compared to overall mean"
+  )
+
+```
+
+Linear regression asks the question 'Is there evidence that the apparent differences between these four groups, Blacks, Hispanics and Whites, compared with Asian/PI are real, or are they likely to be due to chance?'
+
+The answer is they are probably real. More complex tools (notably a thing called 'Tukey's Honest Significant Difference') exist to answer very specific questions like - are Hispanics and Asians/PIs different? We're not going to cover these today either.
+
+Let's look at a slightly different question. Are more segregated cities likely to have worse health, within each racial group than less segregated cities?
+
+This is what it looks like :- 
+
+```{r}
+#require(ggmosaic)
+ggplot(BigC,
+       aes(x =  strata_race_label,
+         y = DeltaValue,
+         fill = strata_race_label,
+         colour = geo_strata_Segregation)) +
+  geom_boxplot()
+
+```
+
+In terms of regression we are fitting a regression that looks at the effects of race and segregation separately (m1 and m2 below), and then together (m3 below).
+
+```{r}
+
+m1 <- (lm(DeltaValue ~ strata_race_label, data=BigC))
+m2 <- (lm(DeltaValue ~ geo_strata_Segregation, data=BigC))
+m3 <- (lm(DeltaValue ~ strata_race_label*geo_strata_Segregation, data=BigC))
+
+tidy(m1)
+tidy(m2)
+tidy(m3)
+
+```
+
+Note how you can assign all sorts of stuff, including models to a variable in R. This means you can do clever stuff with them later on, without calculating them every time.
+
+To make nice tables install the _gtsummary_ package now please.
+
+```{r}
+require(gtsummary)
+
+t1 <- tbl_regression(m1)
+t1
+
+t2 <- tbl_regression(m2)
+t2
+
+t3 <- tbl_regression(m3)
+t3
+
+Model.Table <-
+  tbl_merge(
+    tbls = list(t1,t2,t3),
+    tab_spanner = c('Model 1', 'Model 2', 'Model 3')
+  )
+Model.Table
+```
+
+In our case, the key question is the _strata_race_label*geo_strata_Segregation_. This is a shorter version of _strata_race_label + geo_strata_Segregation + strata_race_label : geo_strata_Segregation_.
+
+Unpicking this, we have a model that looks at the effect of race, and segregation, and the additional effect of high and low segregation for each race. The formal terms for these are the *main effect* of race and segregation, and their *interaction*. Note the very large effect of black race, and the impact (lower YPLL is good, remember) of being Black in a less segregated city.
+
+A general warning :- it seldom makes sense to fit interaction terms without main effects!   
+
+
+Another topic of interest is gender.
+This is what it looks like :- 
+
+```{r}
+#require(ggmosaic)
+ggplot(BigC,
+       aes(x =  strata_sex_label,
+         y = DeltaValue,
+         fill = strata_sex_label,
+         colour = geo_strata_Segregation)) +
+  geom_boxplot()
+
+```
+
+
+A more thorough analysis of these data might look a bit like this.
+
+```{r}
+m4 <- lm(DeltaValue ~
+                 strata_sex_label * strata_race_label +
+           geo_strata_poverty + geo_strata_region +
+           geo_strata_PopDensity + geo_strata_Population +
+           geo_strata_Segregation,
+         data = BigC )
+tbl_regression(m4)
+```
+
+Can you interpret this?
+Which variables matter most?
+
+
+# Next steps
+
+
+R is a language for data analysis and graphics. Like any other language, and indeed like any other skill, you learn it by using it. You get better as you go along. Start by using R in your next project.
+
+We have shown you the first steps on the way using two key ideas - tidy data, and a powerful tool for making graphs based on a formal grammar of graphics. To move further try these sites :-
+
+* tidyverse for beginners - https://rladiessydney.org/post/little-miss-tidyverse/
+
+* knitr - making documents with R - https://rmarkdown.rstudio.com/
+or
+https://sachsmc.github.io/knit-git-markr-guide/knitr/knit.html
+
+* R homepage - https://www.r-project.org/
+* RStudio homepage - https://posit.co/
+* tidyverse homepage - https://www.tidyverse.org/
+* ggplot2 homepage - https://ggplot2.tidyverse.org/
+* R for data science - https://r4ds.hadley.nz/
+
+* Stack overflow - https://stackoverflow.com/
+(A very useful question and answer site for R (among many other topics))
+
+
+* R packages [ __library()__ ] live on CRAN - https://cran.r-project.org/
+* Sets of linked packages are given as *Task Views* - https://cran.r-project.org/web/views/
+
+
+Data sources are :-
+
+* OECD data store - https://data.oecd.org/
+* Big Cities Health Inventory Data Platform. Big Cities Health Coalition. Bigcitieshealthdata.org accessed [14/11/2022].
+
+Two small notes
+* In this file, for educational reasons, we've loaded the packages (with the _library()_ command) as we needed them. In real work it's much better to load all the libraries in the first chunk, and to add any extra ones you need at the bottom of the list in the first chunk. Ask me to show you some of my own code.
+
+* The very start of the file is not R, nor it it text. It's code to control document production, and it's written in a format called YAML, if you ever need to learn more about it. You can take what I've written and adjust it to suit your needs.
